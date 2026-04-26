@@ -1,56 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DATA-X</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DATA-X | Emergency System</title>
     <style>
-        body { background: #1a1a1a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: #2d2d2d; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; border: 2px solid #ed1c24; text-align: center; }
-        .info-row { text-align: left; background: #3d3d3d; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #ed1c24; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #3d3d3d; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #ed1c24; border: none; color: white; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        body { background: #1a1a1a; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #2d2d2d; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; border: 2px solid #ed1c24; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: #ed1c24; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        .info-row { text-align: left; background: #3d3d3d; padding: 12px; border-radius: 10px; margin: 12px 0; border-left: 5px solid #ed1c24; font-size: 14px; }
+        .info-row b { color: #ed1c24; margin-right: 5px; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #444; background: #3d3d3d; color: white; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 15px; background: #ed1c24; border: none; color: white; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; transition: 0.3s; }
+        button:hover { background: #c1121c; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        .footer-text { font-size: 11px; color: #888; margin-top: 20px; }
     </style>
 </head>
 <body>
-<div class="box" id="mainBox">Connecting to Database...</div>
+
+<div class="box" id="mainBox">
+    <h3 id="statusText">Connecting to Database...</h3>
+</div>
 
 <script>
-    const serial = window.location.pathname.split('/').filter(Boolean).pop() || "MAIN";
+    // 1. Get Serial from URL path
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const serial = pathParts.pop() || "MAIN";
     
-    // Naya URL jo aapne photo mein bheja hai
+    // 2. YOUR SCRIPT URL
     const scriptURL = "https://script.google.com/macros/s/AKfycbypsDIZDquoBasyLE_hVPlJdeT-xZQnbZlSlxuLzFvoPBn_lvWchuvB72m4EUtVBb4W/exec";
 
+    // 3. Fetch status from Google Sheet
     fetch(`${scriptURL}?id=${serial}`)
     .then(res => res.json())
     .then(data => {
         if (data.status === "LOCKED") {
+            // Show Locked Data
             document.getElementById('mainBox').innerHTML = `
-                <h2 style="color: #ed1c24;">DATA-X LOCKED</h2>
-                <div class="info-row"><b>Name:</b> ${data.name}</div>
-                <div class="info-row"><b>Phone:</b> ${data.phone}</div>
-                <div class="info-row"><b>Blood:</b> ${data.blood}</div>
+                <h2>DATA-X LOCKED</h2>
+                <div class="info-row"><b>NAME:</b> ${data.name}</div>
+                <div class="info-row"><b>PHONE:</b> ${data.phone}</div>
+                <div class="info-row"><b>BLOOD:</b> ${data.blood}</div>
+                <p class="footer-text">This card is registered. In case of emergency, contact the number above.</p>
             `;
         } else {
+            // Show Registration Form
             document.getElementById('mainBox').innerHTML = `
-                <h2>DATA-X Registration</h2>
-                <p>Registering ID: <b>${serial}</b></p>
+                <h2>Registration</h2>
+                <p style="font-size: 13px; color: #bbb;">Serial ID: ${serial}</p>
                 <form id="regForm">
-                    <input type="text" id="n" placeholder="Full Name" required>
-                    <input type="tel" id="p" placeholder="Emergency Number" required>
-                    <input type="text" id="b" placeholder="Blood Group" required>
-                    <button type="submit" id="btn">SAVE INFO</button>
-                </form>`;
-            
+                    <input type="text" id="name" placeholder="Full Name" required>
+                    <input type="tel" id="phone" placeholder="Emergency Phone" required>
+                    <input type="text" id="blood" placeholder="Blood Group (e.g. O+)" required>
+                    <button type="submit" id="submitBtn">SAVE INFORMATION</button>
+                </form>
+                <p class="footer-text">Once saved, this card will be locked to your profile.</p>
+            `;
+
+            // Handle Form Submit
             document.getElementById('regForm').onsubmit = function(e) {
                 e.preventDefault();
-                document.getElementById('btn').innerText = "SAVING...";
-                const payload = { id: serial, name: document.getElementById('n').value, phone: document.getElementById('p').value, blood: document.getElementById('b').value };
-                
-                fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-                .then(() => { alert("Success! Saved to Sheet."); location.reload(); });
+                const btn = document.getElementById('submitBtn');
+                btn.innerText = "SAVING...";
+                btn.disabled = true;
+
+                const payload = {
+                    id: serial,
+                    name: document.getElementById('name').value,
+                    phone: document.getElementById('phone').value,
+                    blood: document.getElementById('blood').value
+                };
+
+                fetch(scriptURL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload)
+                })
+                .then(() => {
+                    alert("Registration Successful!");
+                    location.reload();
+                })
+                .catch(err => {
+                    alert("Error saving data. Try again.");
+                    btn.innerText = "SAVE INFORMATION";
+                    btn.disabled = false;
+                });
             };
         }
-    }).catch(() => { document.getElementById('mainBox').innerHTML = "Database Error!"; });
+    })
+    .catch(err => {
+        console.error(err);
+        document.getElementById('mainBox').innerHTML = `
+            <h2 style="color: orange;">Connection Error</h2>
+            <p>Make sure Google Script access is set to 'Anyone'.</p>
+            <button onclick="location.reload()">Retry</button>
+        `;
+    });
 </script>
+
 </body>
 </html>
