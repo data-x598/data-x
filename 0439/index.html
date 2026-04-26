@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DATA-X Emergency Box</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { background: #1a1a1a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .box { background: #2d2d2d; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; border: 2px solid #ed1c24; text-align: center; }
+        h2 { color: #ed1c24; margin: 0 0 15px 0; font-size: 28px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #3d3d3d; color: white; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 15px; background: #ed1c24; border: none; color: white; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>DATA-X</h2>
+        <form id="emergencyForm">
+            <input type="text" id="ownerName" placeholder="Owner Name" required>
+            <input type="tel" id="familyNumber" placeholder="Family Number" required>
+            <input type="text" id="bloodInput" placeholder="Blood Group (Type here)" required>
+            <button type="submit">SAVE INFO</button>
+        </form>
+    </div>
+    <script>
+        var path = window.location.pathname;
+        var serial = path.split('/').filter(Boolean).pop() || "MAIN";
+        document.getElementById('emergencyForm').onsubmit = function(e) {
+            e.preventDefault();
+            var scriptURL = "https://script.google.com/macros/s/AKfycbzFJjm_e79YDL6P4_XbRCs_2JyArKzNWJDj2XljRuQ4yP-oJhva5bVcw6P/exec";
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({
+                    id: serial,
+                    name: document.getElementById('ownerName').value,
+                    phone: document.getElementById('familyNumber').value,
+                    blood: document.getElementById('bloodInput').value
+                })
+            }).then(() => {
+                alert("Saved for Serial: " + serial);
+                document.getElementById('emergencyForm').reset();
+            });
+        };
+    </script>
+</body>
+</html>
