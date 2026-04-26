@@ -2,65 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DATA-X | Emergency Card</title>
+    <title>DATA-X | Secure Card</title>
     <style>
-        /* Screen ke bilkul beech mein lane ke liye */
         body { background: #121212; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .box { background: #1e1e1e; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; border: 2px solid #ed1c24; text-align: center; box-shadow: 0 0 20px rgba(237,28,36,0.2); }
+        .box { background: #1e1e1e; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; border: 2px solid #ed1c24; text-align: center; box-shadow: 0 0 20px rgba(237,28,36,0.3); }
         .locked-info { text-align: left; background: #2a2a2a; padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 5px solid #ed1c24; }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: white; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 15px; background: #ed1c24; border: none; color: white; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
-        h2 { color: #ed1c24; margin-top: 0; letter-spacing: 1px; }
-        .loading { border: 4px solid #333; border-top: 4px solid #ed1c24; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        h2 { color: #ed1c24; margin-top: 0; }
     </style>
 </head>
 <body>
-<div class="box" id="display">
-    <div class="loading"></div>
-    <p>Connecting to System...</p>
-</div>
-<script>
-    const serial = window.location.pathname.split('/').filter(Boolean).pop() || "TEST";
-    // Aapka Latest URL Image ffdb4ab5 se
-    const scriptURL = "https://script.google.com/macros/s/AKfycbxG1oZsBZWC0llU8vnoiwsfbpuitvIR1VCGUUi6JEl6lnML8Mi-wNT-qVxaQOou6ps_/exec";
+<div class="box" id="display"></div>
 
-    fetch(`${scriptURL}?id=${serial}`)
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === "LOCKED") {
-            document.getElementById('display').innerHTML = `
-                <h2 style="color: #ed1c24;">● DATA-X LOCKED</h2>
-                <p style="font-size: 12px; color: #888;">Global ID: ${serial}</p>
-                <div class="locked-info"><b>NAME:</b><br>${data.name}</div>
-                <div class="locked-info"><b>EMERGENCY NO:</b><br>${data.phone}</div>
-                <div class="locked-info"><b>BLOOD GROUP:</b><br>${data.blood}</div>
-                <p style="font-size: 11px; color: #666; margin-top: 20px;">This profile is secured & encrypted.</p>`;
-        } else {
-            document.getElementById('display').innerHTML = `
-                <h2>Registration</h2>
-                <p style="font-size: 13px; color: #bbb;">Register this card to your profile.</p>
-                <form id="f">
-                    <input type="text" id="n" placeholder="Full Name" required>
-                    <input type="tel" id="p" placeholder="Emergency Contact" required>
-                    <input type="text" id="b" placeholder="Blood Group (e.g. A+)" required>
-                    <button type="submit" id="s">SAVE & LOCK CARD</button>
-                </form>`;
-            document.getElementById('f').onsubmit = function(e) {
-                e.preventDefault();
-                document.getElementById('s').innerText = "LOCKING...";
-                document.getElementById('s').disabled = true;
-                fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({id:serial, name:document.getElementById('n').value, phone:document.getElementById('p').value, blood:document.getElementById('b').value})})
-                .then(() => { 
-                    alert("Success! Card is now locked to your info."); 
-                    location.reload(); 
-                });
+<script>
+    // URL se Card ID nikalna (e.g., 0015)
+    const cardId = window.location.pathname.split('/').filter(Boolean).pop() || "TEST";
+    const storageKey = "data_x_" + cardId;
+
+    // Check karna ke kya is card ka data pehle se save hai?
+    const savedData = localStorage.getItem(storageKey);
+
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        document.getElementById('display').innerHTML = `
+            <h2>● DATA-X LOCKED</h2>
+            <p style="color: #888;">Global Security ID: ${cardId}</p>
+            <div class="locked-info"><b>OWNER:</b><br>${data.name}</div>
+            <div class="locked-info"><b>EMERGENCY NO:</b><br>${data.phone}</div>
+            <div class="locked-info"><b>BLOOD GROUP:</b><br>${data.blood}</div>
+            <p style="font-size: 11px; color: #666; margin-top: 20px;">This information is locked to this card.</p>
+        `;
+    } else {
+        document.getElementById('display').innerHTML = `
+            <h2>Registration</h2>
+            <p style="font-size: 13px; color: #bbb;">Register this card to activate protection.</p>
+            <form id="regForm">
+                <input type="text" id="n" placeholder="Full Name" required>
+                <input type="tel" id="p" placeholder="Emergency Contact" required>
+                <input type="text" id="b" placeholder="Blood Group" required>
+                <button type="submit">SAVE & LOCK INFO</button>
+            </form>
+        `;
+
+        document.getElementById('regForm').onsubmit = function(e) {
+            e.preventDefault();
+            const userDetails = {
+                name: document.getElementById('n').value,
+                phone: document.getElementById('p').value,
+                blood: document.getElementById('b').value
             };
-        }
-    }).catch(() => { 
-        document.getElementById('display').innerHTML = `<h2 style="color:orange;">Connection Error</h2><p style="font-size:13px;">Please check your internet or script permissions.</p><button onclick="location.reload()">RETRY</button>`; 
-    });
+            // Data ko card ki ID ke sath hamesha ke liye save kar dena
+            localStorage.setItem(storageKey, JSON.stringify(userDetails));
+            alert("Card Registered Successfully!");
+            location.reload();
+        };
+    }
 </script>
 </body>
 </html>
-
